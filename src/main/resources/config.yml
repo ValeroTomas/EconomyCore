@@ -1,0 +1,4 @@
+currency:
+  name: Monedas
+  conversionRate: 1.0
+players: {}

@@ -1,0 +1,84 @@
+name: EconomyCore
+version: 1.0
+main: org.Samy.economyCore.EconomyCore
+api-version: 1.13
+description: Un plugin de economía simple.
+author: Samy
+commands:
+  emitir:
+    description: Cambiar el nombre de la moneda
+    usage: /<command> <nuevoNombreMoneda>
+    permission: economycore.admin
+    permission-message: No tienes permiso para usar este comando.
+    aliases: [moneda, setmoneda]
+    executor: org.Samy.economyCore.Commands.CommandEmitir
+
+  billetera:
+    description: Ver el saldo de tu cuenta
+    usage: /<command>
+    permission: economycore.player
+    permission-message: No tienes permiso para usar este comando.
+    aliases: [saldo, wallet, balance]
+    executor: org.Samy.economyCore.Commands.CommandBilletera
+
+  pagar:
+    description: Transferir dinero a otro jugador
+    usage: /<command> <jugador> <cantidad>
+    permission: economycore.player
+    permission-message: No tienes permiso para usar este comando.
+    aliases: [send, transfer]
+    executor: org.Samy.economyCore.Commands.CommandPagar
+
+  conversion:
+    description: Cambiar la tasa de conversión de esmeraldas a moneda
+    usage: /<command> <tasaConversion>
+    permission: economycore.admin
+    permission-message: No tienes permiso para usar este comando.
+    aliases: [tasa, rate]
+    executor: org.Samy.economyCore.Commands.CommandConversion
+
+  imprimir:
+    description: Convertir esmeraldas en moneda
+    usage: /<command>
+    permission: economycore.player
+    permission-message: No tienes permiso para usar este comando.
+    aliases: [convertir, esmeralda]
+    executor: org.Samy.economyCore.Commands.CommandImprimir
+
+  eHelp:
+    description: Muestra la guía de uso del plugin.
+    usage: /<command>
+    permission: economycore.player
+    permission-message: No tienes permiso para usar este comando.
+    aliases: [eayuda]
+    executor: org.Samy.economyCore.Commands.CommandHelp
+
+  solicitar:
+    description: Enviar una solicitud de dinero a otro jugador.
+    usage: /<command> <cantidad> <jugador>
+    permission: economycore.player
+    permission-message: No tienes permiso para usar este comando.
+    aliases: [request, pedir, garronear]
+    executor: org.Samy.economyCore.Commands.CommandSolicitar
+
+  acceder:
+    description: Aceptar una solicitud de dinero de otro jugador.
+    usage: /<command> <jugador>
+    permission: economycore.player
+    permission-message: No tienes permiso para usar este comando.
+    executor: org.Samy.economyCore.Commands.CommandAcceder
+
+  rechazar:
+    description: Rechazar una solicitud de dinero de otro jugador.
+    usage: /<command> <jugador>
+    permission: economycore.player
+    permission-message: No tienes permiso para usar este comando.
+    executor: org.Samy.economyCore.Commands.CommandRechazar
+
+permissions:
+  economycore.admin:
+    description: Permiso para cambiar la configuración global de la economía y modificar la tasa de conversión
+    default: op
+  economycore.player:
+    description: Permiso para usar comandos de la economía como ver saldo y pagar
+    default: true
