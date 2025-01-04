@@ -6,40 +6,63 @@ import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
+import org.jetbrains.annotations.NotNull;
 
-import java.util.Map;
 import java.util.UUID;
 
 public class CommandRechazar implements CommandExecutor {
 
     @Override
-    public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
+    public boolean onCommand(@NotNull CommandSender sender, @NotNull Command command, @NotNull String label, String[] args) {
         if (!(sender instanceof Player)) {
             sender.sendMessage("Este comando solo puede ser usado por jugadores.");
             return true;
         }
 
         Player receptor = (Player) sender;
+        UUID receptorUUID = receptor.getUniqueId();
 
-        // Verificar si hay una solicitud activa
-        UUID solicitanteId = ConfigManager.getSolicitud(receptor.getUniqueId());
-        if (solicitanteId == null) {
-            receptor.sendMessage("No tienes una solicitud activa para rechazar.");
+        // Obtiene el UUID del emisor de la solicitud
+        UUID emisorUUID = ConfigManager.getTransactionReceiver(receptorUUID);
+
+        // Verifica si el receptor tiene una solicitud pendiente
+        if (emisorUUID == null) {
+            receptor.sendMessage("No tienes ninguna solicitud pendiente.");
+            return false;
+        }
+
+        if (args.length != 1) {
+            receptor.sendMessage("Uso correcto: /rechazar <jugador>");
             return true;
         }
 
-        Player solicitante = Bukkit.getPlayer(solicitanteId);
-        if (solicitante != null) {
-            receptor.sendMessage("Has rechazado la solicitud de " + solicitante.getName() + ".");
-            solicitante.sendMessage("Tu solicitud ha sido rechazada por " + receptor.getName() + ".");
-        } else {
-            receptor.sendMessage("El jugador solicitante ya no está en línea.");
+        Player emisor = Bukkit.getPlayerExact(args[0]);
+
+        if (emisor == null || !emisor.isOnline()) {
+            receptor.sendMessage("El jugador especificado no está en línea.");
+            return true;
         }
 
-        // Eliminar la solicitud después de rechazar
-        ConfigManager.eliminarSolicitud(receptor.getUniqueId());
+        UUID receptorId = receptor.getUniqueId();
+        UUID emisorId = emisor.getUniqueId();
+
+        if (!ConfigManager.hasActiveTransaction(receptorId) || !ConfigManager.hasActiveTransaction(emisorId)) {
+            receptor.sendMessage("No hay ninguna transacción activa con este jugador.");
+            return true;
+        }
+
+        if (!ConfigManager.getTransactionReceiver(emisorId).equals(receptorId)) {
+            receptor.sendMessage("Solo el receptor de la solicitud puede rechazarla.");
+            return true;
+        }
+
+        // Terminar la transacción
+        ConfigManager.setActiveTransaction(receptorId, false);
+        ConfigManager.setActiveTransaction(emisorId, false);
+
+        receptor.sendMessage("Has rechazado la solicitud de " + emisor.getName() + ".");
+        emisor.sendMessage(receptor.getName() + " ha rechazado tu solicitud.");
 
         return true;
     }
 }
-

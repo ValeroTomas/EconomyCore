@@ -1,18 +1,20 @@
 package org.Samy.economyCore.Commands;
 
+import org.Samy.economyCore.util.ConfigManager;
 import org.bukkit.Bukkit;
 import org.bukkit.command.Command;
-import org.Samy.economyCore.util.ConfigManager;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.UUID;
 
 public class CommandAcceder implements CommandExecutor {
 
     @Override
-    public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
+    public boolean onCommand(@NotNull CommandSender sender, @NotNull Command command, @NotNull String label, String[] args) {
+        // Verificar que el jugador está ejecutando el comando
         if (!(sender instanceof Player)) {
             sender.sendMessage("Este comando solo puede ser usado por jugadores.");
             return true;
@@ -20,50 +22,65 @@ public class CommandAcceder implements CommandExecutor {
 
         Player receptor = (Player) sender;
 
-        if (args.length != 2) {
-            receptor.sendMessage("Uso: /acceder <jugador> <cantidad>");
+        // Verificar que el jugador ha especificado al emisor en el comando
+        if (args.length != 1) {
+            receptor.sendMessage("Uso correcto: /acceder <jugador>");
             return true;
         }
 
-        Player solicitante = Bukkit.getPlayerExact(args[0]);
-        if (solicitante == null) {
+        Player emisor = Bukkit.getPlayerExact(args[0]);
+
+        // Verificar si el emisor está en línea
+        if (emisor == null || !emisor.isOnline()) {
             receptor.sendMessage("El jugador especificado no está en línea.");
             return true;
         }
 
-        double cantidad;
-        try {
-            cantidad = Double.parseDouble(args[1]);
-        } catch (NumberFormatException e) {
-            receptor.sendMessage("Por favor, ingresa un número válido para la cantidad.");
+        UUID receptorId = receptor.getUniqueId();
+        UUID emisorId = emisor.getUniqueId();
+
+        // Verificar si existe una transacción activa para ambos jugadores
+        if (!ConfigManager.hasActiveTransaction(receptorId) || !ConfigManager.hasActiveTransaction(emisorId)) {
+            receptor.sendMessage("No hay ninguna transacción activa con este jugador.");
             return true;
         }
 
-        // Verificar si existe una solicitud activa para este receptor
-        UUID solicitanteId = ConfigManager.getSolicitud(receptor.getUniqueId());
-        if (solicitanteId == null) {
-            receptor.sendMessage("No tienes una solicitud activa para aceptar.");
+        // Verificar si el receptor es el correcto para aceptar la solicitud
+        if (!ConfigManager.getTransactionReceiver(emisorId).equals(receptorId)) {
+            receptor.sendMessage("Solo el receptor de la solicitud puede aceptarla.");
             return true;
         }
 
-        if (!solicitanteId.equals(solicitante.getUniqueId())) {
-            receptor.sendMessage("La solicitud activa no corresponde al jugador especificado.");
+        // Obtener la cantidad solicitada desde ConfigManager
+        double cantidad = ConfigManager.getTransactionAmount(emisorId);
+
+        // Verificar si el receptor tiene suficientes fondos
+        double saldoReceptor = ConfigManager.getBalance(receptorId);
+
+        if (saldoReceptor < cantidad) {
+            receptor.sendMessage("No tienes suficientes fondos para completar la transacción.");
             return true;
         }
 
-        // Verificar que el receptor tiene suficiente saldo
-        if (ConfigManager.getBalance(receptor.getUniqueId()) >= cantidad) {
-            ConfigManager.withdraw(receptor.getUniqueId(), cantidad);
-            ConfigManager.deposit(solicitante.getUniqueId(), cantidad);
-            receptor.sendMessage("Has aceptado la solicitud y transferido " + cantidad + " " + ConfigManager.getCurrencyName() + " a " + solicitante.getName() + ".");
-            solicitante.sendMessage("El jugador " + receptor.getName() + " ha aceptado tu solicitud de " + cantidad + " " + ConfigManager.getCurrencyName() + ".");
-
-            // Eliminar la solicitud después de completar la transacción
-            ConfigManager.eliminarSolicitud(receptor.getUniqueId());
-        } else {
-            receptor.sendMessage("No tienes suficiente saldo para completar esta transacción.");
+        // Realizar la transacción
+        // Retirar fondos al receptor
+        if (!ConfigManager.withdraw(receptorId, cantidad)) {
+            receptor.sendMessage("Hubo un problema al retirar el dinero de tu cuenta.");
+            return true;
         }
+
+        // Depositar fondos al emisor
+        ConfigManager.deposit(emisorId, cantidad);
+
+        // Cambiar el estado de la transacción a falsa para ambos jugadores
+        ConfigManager.setActiveTransaction(receptorId, false);
+        ConfigManager.setActiveTransaction(emisorId, false);
+
+        // Informar a ambos jugadores
+        receptor.sendMessage("Has aceptado la solicitud de " + emisor.getName() + " por " + cantidad + " " + ConfigManager.getCurrencyName() + ".");
+        emisor.sendMessage(receptor.getName() + " ha aceptado tu solicitud. Has recibido " + cantidad + " " + ConfigManager.getCurrencyName() + ".");
 
         return true;
     }
 }
+

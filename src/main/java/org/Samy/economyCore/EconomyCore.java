@@ -19,7 +19,6 @@ public final class EconomyCore extends JavaPlugin {
     private double conversionRate = 1.0; // Tasa de conversión por defecto (1 esmeralda = 1 moneda)
     private FileConfiguration config;
 
-    private Map<UUID, UUID> solicitudes; // Mapa de solicitudes
     @Override
     public void onEnable() {
         // Cargar configuración predeterminada si no existe
@@ -28,8 +27,6 @@ public final class EconomyCore extends JavaPlugin {
         // Inicializar ConfigManager
         ConfigManager.setup(getDataFolder());
 
-        solicitudes = new HashMap<>();
-
         // Registrar comandos
         getCommand("emitir").setExecutor(new CommandEmitir());
         getCommand("billetera").setExecutor(new CommandBilletera());
@@ -37,7 +34,7 @@ public final class EconomyCore extends JavaPlugin {
         getCommand("imprimir").setExecutor(new CommandImprimir());
         getCommand("conversion").setExecutor(new CommandConversion());
         getCommand("eHelp").setExecutor(new CommandEHelp());
-        getCommand("solicitar").setExecutor(new CommandSolicitar(this));
+        getCommand("solicitar").setExecutor(new CommandSolicitar());
         getCommand("acceder").setExecutor(new CommandAcceder());
         getCommand("rechazar").setExecutor(new CommandRechazar());
         getLogger().info("EconomyCore ha sido habilitado.");
@@ -78,10 +75,6 @@ public final class EconomyCore extends JavaPlugin {
         } else {
             sender.sendMessage("No tienes suficientes " + currencyName + ".");
         }
-    }
-
-    public void agregarSolicitud(UUID emisor, UUID receptor) {
-        solicitudes.put(receptor, emisor);
     }
 
     @Override
