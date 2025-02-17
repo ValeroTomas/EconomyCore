@@ -11,7 +11,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 import org.Samy.economyCore.util.ConfigManager;
-
+//cambio para chequear commit
 public final class EconomyCore extends JavaPlugin {
 
     private Map<String, Double> balances = new HashMap<>();
